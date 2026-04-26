@@ -7,7 +7,7 @@
     "dev": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
     "preview": "cd frontend && npm run preview",
-    "backend": "cd backend && uv run main.py",
+    "backend": "cd backend && ..\\.venv\\Scripts\\python.exe main.py",
     "all": "concurrently \"npm run backend\" \"npm run dev\""
   },
   "dependencies": {
