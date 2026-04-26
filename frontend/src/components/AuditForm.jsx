@@ -94,14 +94,10 @@ function AuditForm({ onAuditComplete, onCancel }) {
         groups: formData.groups.length > 0 ? formData.groups : null
       };
 
-      console.log('[v0] Submitting audit request:', payload);
-
       const response = await axios.post(`${API_URL}/audit`, payload);
-      console.log('[v0] Audit response received:', response.data);
 
       onAuditComplete(response.data);
     } catch (err) {
-      console.log('[v0] Error during audit:', err);
       setError(err.response?.data?.detail || err.message || 'Error processing audit. Make sure the backend is running.');
     } finally {
       setLoading(false);
