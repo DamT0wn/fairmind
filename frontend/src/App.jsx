@@ -5,8 +5,14 @@ import Dashboard from './components/Dashboard';
 import AuditForm from './components/AuditForm';
 import ResultsDisplay from './components/ResultsDisplay';
 
+import CaseStudies from './components/CaseStudies';
+import BiasHeatmap from './components/BiasHeatmap';
+import ModelComparison from './components/ModelComparison';
+import BiasSimulator from './components/BiasSimulator';
+import FileUpload from './components/FileUpload';
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [selectedCaseStudy, setSelectedCaseStudy] = useState(null);
   const [auditResults, setAuditResults] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
 
@@ -189,3 +195,8 @@ function App() {
 }
 
 export default App;
+
+  const handleSelectCaseStudy = (caseStudy) => {
+    setSelectedCaseStudy(caseStudy);
+    setCurrentPage('audit');
+  };
