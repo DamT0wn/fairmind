@@ -3,166 +3,81 @@ import numpy as np
 from typing import List, Dict, Tuple
 
 def calculate_fairness_metrics(
-    df: pd.DataFrame,
-    sensitive_attributes: List[str],
-    target_variable: str
+    predictions: List[int],
+    actuals: List[int],
+    protected_attribute: str,
+    groups: List[str] = None
 ) -> Dict:
     """
-    Calculate comprehensive fairness metrics for a dataset
+    Calculate comprehensive fairness metrics for model predictions
     """
+    predictions = np.array(predictions)
+    actuals = np.array(actuals)
+    
     metrics = {
-        "dataset_info": {
-            "total_samples": len(df),
-            "total_columns": len(df.columns),
-            "sensitive_attributes": sensitive_attributes,
-            "target_variable": target_variable
-        },
-        "group_metrics": {},
-        "fairness_metrics": {}
+        "overall_accuracy": float(np.mean(predictions == actuals)),
+        "true_positives": int(np.sum((predictions == 1) & (actuals == 1))),
+        "true_negatives": int(np.sum((predictions == 0) & (actuals == 0))),
+        "false_positives": int(np.sum((predictions == 1) & (actuals == 0))),
+        "false_negatives": int(np.sum((predictions == 0) & (actuals == 1))),
+        "approval_rate": float(np.mean(predictions))
     }
     
-    # Calculate metrics for each sensitive attribute
-    for attr in sensitive_attributes:
-        if attr in df.columns:
-            metrics["group_metrics"][attr] = calculate_group_metrics(
-                df, attr, target_variable
-            )
+    # Calculate fairness metrics
+    if groups and len(groups) == len(predictions):
+        groups = np.array(groups)
+        unique_groups = np.unique(groups)
+        
+        group_metrics = {}
+        approval_rates = {}
+        accuracies = {}
+        
+        for group in unique_groups:
+            group_mask = groups == group
+            group_preds = predictions[group_mask]
+            group_actuals = actuals[group_mask]
             
-            # Calculate fairness gap metrics
-            fairness_gaps = calculate_fairness_gaps(df, attr, target_variable)
-            metrics["fairness_metrics"][attr] = fairness_gaps
-    
-    # Calculate overall fairness score
-    metrics["overall_bias_score"] = calculate_overall_score(metrics["fairness_metrics"])
-    
-    return metrics
-
-def calculate_group_metrics(
-    df: pd.DataFrame,
-    sensitive_attr: str,
-    target_var: str
-) -> Dict:
-    """
-    Calculate metrics broken down by groups in sensitive attribute
-    """
-    metrics = {}
-    
-    groups = df[sensitive_attr].unique()
-    
-    for group in groups:
-        group_df = df[df[sensitive_attr] == group]
-        
-        if len(group_df) == 0:
-            continue
-        
-        # Calculate approval rate
-        approval_count = (group_df[target_var] == 1).sum()
-        approval_rate = approval_count / len(group_df)
-        
-        metrics[str(group)] = {
-            "count": len(group_df),
-            "approval_count": int(approval_count),
-            "approval_rate": round(approval_rate, 4),
-            "denial_rate": round(1 - approval_rate, 4),
-            "percentage_of_dataset": round(len(group_df) / len(df), 4)
-        }
-    
-    return metrics
-
-def calculate_fairness_gaps(
-    df: pd.DataFrame,
-    sensitive_attr: str,
-    target_var: str
-) -> Dict:
-    """
-    Calculate fairness gap metrics (demographic parity, equal opportunity, etc.)
-    """
-    gaps = {}
-    
-    groups = df[sensitive_attr].dropna().unique()
-    approval_rates = {}
-    
-    for group in groups:
-        group_df = df[df[sensitive_attr] == group]
-        if len(group_df) > 0:
-            approval_rate = (group_df[target_var] == 1).sum() / len(group_df)
+            approval_rate = float(np.mean(group_preds))
+            accuracy = float(np.mean(group_preds == group_actuals))
+            
+            group_metrics[str(group)] = {
+                "count": int(np.sum(group_mask)),
+                "approval_rate": approval_rate,
+                "accuracy": accuracy,
+                "true_positives": int(np.sum((group_preds == 1) & (group_actuals == 1))),
+                "false_positives": int(np.sum((group_preds == 1) & (group_actuals == 0))),
+                "true_negatives": int(np.sum((group_preds == 0) & (group_actuals == 0))),
+                "false_negatives": int(np.sum((group_preds == 0) & (group_actuals == 1)))
+            }
+            
             approval_rates[str(group)] = approval_rate
+            accuracies[str(group)] = accuracy
+        
+        # Calculate fairness gaps
+        if len(approval_rates) >= 2:
+            rates = np.array(list(approval_rates.values()))
+            
+            metrics["demographic_parity_difference"] = float(np.max(rates) - np.min(rates))
+            
+            if np.min(rates) > 0:
+                metrics["disparate_impact_ratio"] = float(np.min(rates) / np.max(rates))
+            
+            metrics["max_accuracy_diff"] = float(np.max(list(accuracies.values())) - np.min(list(accuracies.values())))
+            
+            # Bias severity assessment
+            if metrics.get("disparate_impact_ratio", 1.0) >= 0.8:
+                metrics["bias_level"] = "Low"
+            elif metrics.get("disparate_impact_ratio", 0) >= 0.6:
+                metrics["bias_level"] = "Moderate"
+            else:
+                metrics["bias_level"] = "High"
+        
+        metrics["group_metrics"] = group_metrics
+        metrics["approval_rates_by_group"] = {k: round(v, 4) for k, v in approval_rates.items()}
     
-    if len(approval_rates) >= 2:
-        rates_list = list(approval_rates.values())
-        
-        # Demographic Parity Difference
-        gaps["demographic_parity_difference"] = round(
-            max(rates_list) - min(rates_list), 4
-        )
-        
-        # Disparate Impact Ratio
-        min_rate = min(rates_list)
-        max_rate = max(rates_list)
-        if min_rate > 0:
-            gaps["disparate_impact_ratio"] = round(min_rate / max_rate, 4)
-        
-        # Equal Opportunity Difference (simplified - uses approval rate as proxy)
-        gaps["equal_opportunity_difference"] = round(
-            max(rates_list) - min(rates_list), 4
-        )
-        
-        # Fairness threshold assessment
-        gaps["is_fair"] = gaps.get("disparate_impact_ratio", 1.0) >= 0.8
-    
-    gaps["approval_rates_by_group"] = {k: round(v, 4) for k, v in approval_rates.items()}
-    
-    return gaps
+    return metrics
 
-def calculate_overall_score(fairness_metrics: Dict) -> Dict:
-    """
-    Calculate an overall bias score
-    """
-    if not fairness_metrics:
-        return {"score": 0.0, "level": "Unknown"}
-    
-    disparate_impacts = []
-    fairness_gaps = []
-    
-    for attr_metrics in fairness_metrics.values():
-        if isinstance(attr_metrics, dict):
-            if "disparate_impact_ratio" in attr_metrics:
-                disparate_impacts.append(attr_metrics["disparate_impact_ratio"])
-            if "demographic_parity_difference" in attr_metrics:
-                fairness_gaps.append(attr_metrics["demographic_parity_difference"])
-    
-    if not disparate_impacts and not fairness_gaps:
-        return {"score": 0.0, "level": "Unknown"}
-    
-    # Calculate composite bias score
-    overall_score = 0.0
-    
-    if disparate_impacts:
-        # Lower is worse (more biased)
-        di_score = (1 - min(disparate_impacts)) * 100
-        overall_score += di_score * 0.5
-    
-    if fairness_gaps:
-        # Higher gap means more biased
-        gap_score = (1 - min(fairness_gaps)) * 100
-        overall_score += gap_score * 0.5
-    
-    overall_score = max(0, min(100, overall_score))
-    
-    # Determine bias level
-    if overall_score >= 80:
-        level = "Low Bias"
-    elif overall_score >= 50:
-        level = "Moderate Bias"
-    elif overall_score >= 20:
-        level = "High Bias"
-    else:
-        level = "Severe Bias"
-    
-    return {
-        "score": round(overall_score, 2),
-        "level": level
-    }
+
 
 def get_mitigation_strategies(bias_report: Dict, selected_strategies: List[str] = None) -> List[Dict]:
     """
