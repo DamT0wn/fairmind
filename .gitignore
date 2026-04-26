@@ -18,6 +18,7 @@ __pycache__/
 .Python
 
 # Virtual environments
+.venv/
 env/
 venv/
 ENV/
@@ -64,6 +65,9 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
+
+# Root workspace artifacts
+/package-lock.json
 
 # OS files
 .DS_Store?
