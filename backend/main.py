@@ -16,10 +16,13 @@ from report_generator import generate_pdf_report
 app = FastAPI(title="FairScan AI Bias Auditor", version="1.0.0")
 
 # Add CORS middleware
+cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
+cors_origins = [o.strip() for o in cors_origins_str.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -76,7 +79,7 @@ async def perform_audit(request: AuditRequest):
         
         df = pd.DataFrame(data)
         
-        # Calculate fairness metrics
+        # Calculate fairness metrics (includes group_metrics internally)
         bias_metrics = calculate_fairness_metrics(
             request.predictions,
             request.actuals,
@@ -87,20 +90,8 @@ async def perform_audit(request: AuditRequest):
         # Get mitigation strategies
         mitigation_strategies = get_mitigation_strategies(bias_metrics)
         
-        # Calculate group metrics if groups provided
-        group_metrics = {}
-        if request.groups:
-            unique_groups = list(set(request.groups))
-            for group in unique_groups:
-                group_mask = np.array(request.groups) == group
-                group_preds = np.array(request.predictions)[group_mask]
-                group_actuals = np.array(request.actuals)[group_mask]
-                
-                group_metrics[group] = {
-                    'approval_rate': float(np.mean(group_preds)),
-                    'accuracy': float(np.mean(group_preds == group_actuals)),
-                    'count': int(np.sum(group_mask))
-                }
+        # Extract group_metrics from bias_metrics (already computed inside calculate_fairness_metrics)
+        group_metrics = bias_metrics.pop("group_metrics", {})
         
         # Create audit ID
         audit_id = f"audit_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -118,6 +109,7 @@ async def perform_audit(request: AuditRequest):
         return {
             "audit_id": audit_id,
             "model_name": request.model_name,
+            "protected_attribute": request.protected_attribute,
             "bias_metrics": bias_metrics,
             "mitigation_strategies": mitigation_strategies,
             "group_metrics": group_metrics,
