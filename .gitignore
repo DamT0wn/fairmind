@@ -82,3 +82,4 @@ htmlcov/
 # Cache
 .cache/
 .vite/
+.vercel
