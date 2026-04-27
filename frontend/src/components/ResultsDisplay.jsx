@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line } from 'recharts';
 import { ArrowLeft, Download, AlertTriangle, CheckCircle2, Loader2, Info, Scale, Award } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { API_BASE_URL } from '../services/api';
 const pct = (v, d = 1) => `${((v || 0) * 100).toFixed(d)}%`;
 const fmt = (v, d = 3) => (v != null ? Number(v).toFixed(d) : '—');
 
@@ -52,7 +51,7 @@ function ResultsDisplay({ results, onBack }) {
   const download = async () => {
     setDlError(''); setDownloading(true);
     try {
-      const r = await axios.post(`${API_URL}/generate-report`, { audit_id: results.audit_id }, { responseType: 'blob' });
+      const r = await axios.post(`${API_BASE_URL}/generate-report`, { audit_id: results.audit_id }, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([r.data]));
       const a = document.createElement('a'); a.href = url;
       a.setAttribute('download', `fairmind-${results.audit_id}.pdf`);

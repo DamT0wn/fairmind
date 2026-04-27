@@ -1,6 +1,22 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const DEFAULT_PROD_API_URL = 'https://api.fairmind.com/api';
+
+const normalizeApiBaseUrl = (rawUrl) => {
+  if (!rawUrl) {
+    return import.meta.env.PROD ? DEFAULT_PROD_API_URL : '/api';
+  }
+
+  const trimmedUrl = rawUrl.replace(/\/+$/, '');
+
+  if (trimmedUrl.startsWith('/')) {
+    return trimmedUrl;
+  }
+
+  return trimmedUrl.endsWith('/api') ? trimmedUrl : `${trimmedUrl}/api`;
+};
+
+export const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { Upload, X, FileText, CheckCircle2, AlertCircle, Sparkles, ArrowLeft, Loader2, Database, ChevronDown } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { API_BASE_URL } from '../services/api';
 
 const USE_CASES = [
   { value: 'general', label: '🔍 General / Other' },
@@ -98,12 +97,12 @@ function AuditForm({ onAuditComplete, onCancel }) {
         fd.append('model_name', formData.modelName || csvFile.name);
         fd.append('protected_attribute', formData.protectedAttribute);
         fd.append('use_case', formData.useCase);
-        res = await axios.post(`${API_URL}/audit/csv`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+        res = await axios.post(`${API_BASE_URL}/audit/csv`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       } else {
         if (!formData.modelName) { setError('Enter a model name.'); setLoading(false); return; }
         if (!formData.predictions.length || !formData.actuals.length) { setError('Upload predictions & actuals, or load a demo.'); setLoading(false); return; }
         if (formData.predictions.length !== formData.actuals.length) { setError('Predictions and actuals length must match.'); setLoading(false); return; }
-        res = await axios.post(`${API_URL}/audit`, {
+        res = await axios.post(`${API_BASE_URL}/audit`, {
           model_name: formData.modelName, protected_attribute: formData.protectedAttribute,
           use_case: formData.useCase, predictions: formData.predictions, actuals: formData.actuals,
           groups: formData.groups.length > 0 ? formData.groups : null
