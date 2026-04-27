@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const DEFAULT_PROD_API_URL = 'https://api.fairmind.com/api';
+const DEFAULT_PROD_API_URL = 'https://fairmind-backend.onrender.com/api';
 
 const normalizeApiBaseUrl = (rawUrl) => {
   if (!rawUrl) {
