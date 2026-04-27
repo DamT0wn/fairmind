@@ -1,12 +1,12 @@
 import axios from 'axios';
 
-const DEFAULT_PROD_API_URL = 'https://fairmind-backend.onrender.com/api';
+const DEFAULT_API_URL = '/api';
 
 const isLocalhostUrl = (url) => /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(url);
 
 const normalizeApiBaseUrl = (rawUrl) => {
   if (!rawUrl) {
-    return import.meta.env.PROD ? DEFAULT_PROD_API_URL : '/api';
+    return DEFAULT_API_URL;
   }
 
   const trimmedUrl = rawUrl.replace(/\/+$/, '');
@@ -17,7 +17,7 @@ const normalizeApiBaseUrl = (rawUrl) => {
 
   // Guard against production env vars accidentally pointing to localhost.
   if (import.meta.env.PROD && isLocalhostUrl(trimmedUrl)) {
-    return DEFAULT_PROD_API_URL;
+    return DEFAULT_API_URL;
   }
 
   return trimmedUrl.endsWith('/api') ? trimmedUrl : `${trimmedUrl}/api`;
