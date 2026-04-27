@@ -9,6 +9,7 @@ import numpy as np
 from datetime import datetime
 import json
 import os
+import socket
 
 from fairness_metrics import calculate_fairness_metrics, get_mitigation_strategies
 from report_generator import generate_pdf_report
@@ -171,4 +172,24 @@ async def generate_report(data: Dict):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    host = os.getenv("HOST", "0.0.0.0")
+    requested_port = int(os.getenv("PORT", "8000"))
+
+    # Avoid startup failure when the default port is already occupied.
+    def find_available_port(start_port: int, max_tries: int = 20) -> int:
+        for port in range(start_port, start_port + max_tries):
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                try:
+                    sock.bind((host, port))
+                    return port
+                except OSError:
+                    continue
+        raise RuntimeError(f"No free port found in range {start_port}-{start_port + max_tries - 1}")
+
+    port = find_available_port(requested_port)
+    if port != requested_port:
+        print(f"Port {requested_port} is in use, starting backend on port {port} instead.")
+
+    uvicorn.run(app, host=host, port=port)

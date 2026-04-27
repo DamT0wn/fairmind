@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Upload, CheckCircle2, AlertCircle, FileText, Loader } from 'lucide-react';
+import { Upload, CheckCircle2, AlertCircle, Loader } from 'lucide-react';
 import apiClient from '../services/api';
 
 export default function FileUpload({ onDataLoaded, onError }) {

@@ -1,23 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Slider } from '@radix-ui/react-slider';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Zap, TrendingDown, TrendingUp } from 'lucide-react';
 
 export default function BiasSimulator({ originalMetrics = {} }) {
   const [adjustment, setAdjustment] = useState(0);
-  const [simulatedMetrics, setSimulatedMetrics] = useState(originalMetrics);
-
-  useEffect(() => {
-    // Simulate bias reduction with threshold adjustment
+  const simulatedMetrics = useMemo(() => {
     const adjustmentPercent = adjustment / 100;
-    const simulated = {
+    return {
       demographicParity: Math.max(0, (originalMetrics.demographic_parity || 0.25) * (1 - adjustmentPercent)),
       equalizedOdds: Math.max(0, (originalMetrics.equalized_odds || 0.22) * (1 - adjustmentPercent)),
       predictiveParity: Math.max(0, (originalMetrics.predictive_parity || 0.20) * (1 - adjustmentPercent)),
       overallAccuracy: (originalMetrics.overall_accuracy || 0.85) - (adjustmentPercent * 0.02),
     };
-    setSimulatedMetrics(simulated);
   }, [adjustment, originalMetrics]);
 
   const data = [
@@ -38,7 +33,8 @@ export default function BiasSimulator({ originalMetrics = {} }) {
     },
   ];
 
-  const biasReduction = (((originalMetrics.demographic_parity || 0.25) - simulatedMetrics.demographicParity) / (originalMetrics.demographic_parity || 0.25) * 100).toFixed(1);
+  const baselineParity = originalMetrics.demographic_parity || 0.25;
+  const biasReduction = ((baselineParity - simulatedMetrics.demographicParity) / baselineParity * 100).toFixed(1);
   const accuracyImpact = ((originalMetrics.overall_accuracy || 0.85) - simulatedMetrics.overallAccuracy).toFixed(2);
 
   return (

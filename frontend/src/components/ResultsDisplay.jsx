@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line } from 'recharts';
-import { ArrowLeft, Download, AlertTriangle, CheckCircle2, TrendingUp, Shield, FileText, Loader2, Info, Scale, Award } from 'lucide-react';
+import { ArrowLeft, Download, AlertTriangle, CheckCircle2, Loader2, Info, Scale, Award } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 const pct = (v, d = 1) => `${((v || 0) * 100).toFixed(d)}%`;

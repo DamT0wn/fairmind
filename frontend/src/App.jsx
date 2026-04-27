@@ -5,37 +5,29 @@ import Dashboard from './components/Dashboard';
 import AuditForm from './components/AuditForm';
 import ResultsDisplay from './components/ResultsDisplay';
 
-import CaseStudies from './components/CaseStudies';
-import BiasHeatmap from './components/BiasHeatmap';
-import ModelComparison from './components/ModelComparison';
-import BiasSimulator from './components/BiasSimulator';
-import FileUpload from './components/FileUpload';
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [selectedCaseStudy, setSelectedCaseStudy] = useState(null);
   const [auditResults, setAuditResults] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      return savedTheme === 'dark';
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   useEffect(() => {
-    // Check for saved theme preference or default to light mode
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      setDarkMode(true);
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    if (!darkMode) {
+    if (darkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
+  }, [darkMode]);
+
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => !prev);
   };
 
   const handleAuditComplete = (results) => {
@@ -195,8 +187,3 @@ function App() {
 }
 
 export default App;
-
-  const handleSelectCaseStudy = (caseStudy) => {
-    setSelectedCaseStudy(caseStudy);
-    setCurrentPage('audit');
-  };

@@ -42,6 +42,23 @@ const DEMO_SCENARIOS = [
   }
 ];
 
+function FileBox({ field, label, description, accept, loaded, onFileChange }) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</label>
+      <input type="file" accept={accept} onChange={(e) => onFileChange(e, field)} className="hidden" id={`fb-${field}`} />
+      <label htmlFor={`fb-${field}`} className="group flex items-center justify-center w-full px-6 py-8 glass rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-blue-500 cursor-pointer transition-all">
+        <div className="text-center">
+          {loaded > 0
+            ? <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex flex-col items-center"><CheckCircle2 className="w-10 h-10 text-green-500 mb-2" /><p className="text-sm font-medium text-slate-700 dark:text-slate-300">{loaded} items loaded ✓</p></motion.div>
+            : <><Upload className="w-10 h-10 text-slate-400 group-hover:text-blue-500 mx-auto mb-2 transition-colors" /><p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Click to upload</p><p className="text-xs text-slate-500">{description}</p></>
+          }
+        </div>
+      </label>
+    </div>
+  );
+}
+
 function AuditForm({ onAuditComplete, onCancel }) {
   const [mode, setMode] = useState('manual');
   const [formData, setFormData] = useState({ modelName: '', protectedAttribute: 'gender', useCase: 'general', predictions: [], actuals: [], groups: [] });
@@ -97,21 +114,6 @@ function AuditForm({ onAuditComplete, onCancel }) {
       setError(err.response?.data?.detail || err.message || 'Backend not reachable. Start it on port 8000.');
     } finally { setLoading(false); }
   };
-
-  const FileBox = ({ field, label, description, accept, loaded }) => (
-    <div className="space-y-2">
-      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</label>
-      <input type="file" accept={accept} onChange={(e) => handleFile(e, field)} className="hidden" id={`fb-${field}`} />
-      <label htmlFor={`fb-${field}`} className="group flex items-center justify-center w-full px-6 py-8 glass rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-blue-500 cursor-pointer transition-all">
-        <div className="text-center">
-          {loaded > 0
-            ? <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex flex-col items-center"><CheckCircle2 className="w-10 h-10 text-green-500 mb-2" /><p className="text-sm font-medium text-slate-700 dark:text-slate-300">{loaded} items loaded ✓</p></motion.div>
-            : <><Upload className="w-10 h-10 text-slate-400 group-hover:text-blue-500 mx-auto mb-2 transition-colors" /><p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Click to upload</p><p className="text-xs text-slate-500">{description}</p></>
-          }
-        </div>
-      </label>
-    </div>
-  );
 
   return (
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="max-w-4xl mx-auto">
@@ -185,10 +187,10 @@ function AuditForm({ onAuditComplete, onCancel }) {
           {mode === 'manual' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FileBox field="predictions" label="Model Predictions *" description="One value per line (0 or 1)" accept=".txt,.csv" loaded={formData.predictions.length} />
-                <FileBox field="actuals" label="Actual Outcomes *" description="One value per line (0 or 1)" accept=".txt,.csv" loaded={formData.actuals.length} />
+                <FileBox field="predictions" label="Model Predictions *" description="One value per line (0 or 1)" accept=".txt,.csv" loaded={formData.predictions.length} onFileChange={handleFile} />
+                <FileBox field="actuals" label="Actual Outcomes *" description="One value per line (0 or 1)" accept=".txt,.csv" loaded={formData.actuals.length} onFileChange={handleFile} />
               </div>
-              <FileBox field="groups" label="Demographic Groups (Optional)" description="One label per line (e.g., Male, Female)" accept=".txt,.csv" loaded={formData.groups.length} />
+              <FileBox field="groups" label="Demographic Groups (Optional)" description="One label per line (e.g., Male, Female)" accept=".txt,.csv" loaded={formData.groups.length} onFileChange={handleFile} />
             </motion.div>
           )}
 

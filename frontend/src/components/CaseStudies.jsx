@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Zap, TrendingDown, AlertTriangle, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Zap, AlertTriangle, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { caseStudies } from '../data/caseStudies';
 
 export default function CaseStudies({ onSelectCase }) {
